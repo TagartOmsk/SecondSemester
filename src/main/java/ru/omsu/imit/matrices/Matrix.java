@@ -1,8 +1,9 @@
 package ru.omsu.imit.matrices;
 
+import java.io.Serializable;
 import java.util.Arrays;
 
-public class Matrix implements IMatrix {
+public class Matrix implements IMatrix, Serializable {
     protected double[] array;
     protected int size;
     protected double determinant;

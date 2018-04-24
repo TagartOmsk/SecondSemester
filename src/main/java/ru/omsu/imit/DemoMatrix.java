@@ -42,4 +42,16 @@ public class DemoMatrix {
         }
         return res;
     }
+
+    public static void serialize(OutputStream stream, Matrix obj) throws IOException{
+        ObjectOutputStream oos = new ObjectOutputStream(stream);
+        oos.writeObject(obj);
+        oos.flush();
+        oos.close();
+    }
+
+    public static Matrix deserialize(InputStream stream) throws IOException, ClassNotFoundException{
+        ObjectInputStream oin = new ObjectInputStream(stream);
+        return (Matrix) oin.readObject();
+    }
 }
