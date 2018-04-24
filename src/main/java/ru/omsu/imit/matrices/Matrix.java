@@ -1,52 +1,52 @@
-package ru.omsu.imit;
+package ru.omsu.imit.matrices;
 
 import java.util.Arrays;
 
-public class Matrix implements IMatrix{
+public class Matrix implements IMatrix {
     protected double[] array;
     protected int size;
+    protected double determinant;
+    protected boolean isCalculated = false;
 
-    public Matrix(){
-        this.size = 1;
-        this.array = new double[size*size];
-
-    }
-
-    public Matrix(int size){
-        this.array = new double[size*size];
+    public Matrix(int size, double... args) {
+        this.array = new double[size * size];
         this.size = size;
-    }
-
-    public Matrix(int size, double...args){
-        this.array = new double[size*size];
-        this.size = size;
-        for(int i = 0; i<Math.min(this.array.length,args.length);i++){
-            this.array[i]=args[i];
+        for (int i = 0; i < Math.min(this.array.length, args.length); i++) {
+            this.array[i] = args[i];
         }
+        isCalculated = false;
     }
 
-    public Matrix(Matrix orig){
+    public Matrix() {
+        this(1,1);
+    }
+
+    public Matrix(int size) {
+        this(size, new double[size * size]);
+    }
+
+
+
+    public Matrix(Matrix orig) {
         this.size = orig.size;
         this.array = orig.array.clone();
     }
 
-    public int length(){
+    public int length() {
         return size;
     }
 
-    public double get(int x, int y) throws WrongCoordinatesException{
-        if(x * size + y >= size * size) throw new WrongCoordinatesException();
-        return array[x*size + y];
-    }
-    //delete nahui
-    public double get(int x){
-        return array[x];
+    public double get(int x, int y) throws WrongCoordinatesException {
+        if (x * size + y >= size * size) throw new WrongCoordinatesException();
+        return array[x * size + y];
     }
 
-    public void set(double value, int x, int y) throws WrongCoordinatesException{
+
+    public void set(double value, int x, int y) throws WrongCoordinatesException {
         try {
             array[x * size + y] = value;
-        }catch(ArrayIndexOutOfBoundsException e){
+            isCalculated = false;
+        } catch (ArrayIndexOutOfBoundsException e) {
             throw new WrongCoordinatesException();
         }
     }
@@ -54,12 +54,15 @@ public class Matrix implements IMatrix{
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (o == null || !(o instanceof Matrix)) return false;
 
         Matrix matrix = (Matrix) o;
 
         if (size != matrix.size) return false;
-        return Arrays.equals(array, matrix.array);
+        for(int i = 0; i < array.length; i++){
+            if(Math.abs(array[i] - matrix.array[i]) > 1e-9)return false;
+        }
+        return true;
     }
 
     @Override
@@ -68,65 +71,95 @@ public class Matrix implements IMatrix{
         result = 31 * result + size;
         return result;
     }
-/*public double getDeterminant(){
-        double[] wArray = this.array.clone();
-        double result = 1;
-        for(int i = 0; i < size-1; i++){
-            for(int j = i; j < size; j++){
-                for(int k = size-1; k >= i; k--){
-                    wArray[j*size + k]/=wArray[j*size + i];
-                }
-            }
-            for(int j = i+1; j < size; j++){
-                for(int k = i; k < size; k++){
-                    wArray[j*size + k] -= wArray[i*size + k];
-                }
-            }
-        }
-        for(int i = 0; i < size; i++){
-            result*=wArray[i*size + i];
-        }
-        return result;
-    }*/
-    /*public double getDeterminant(){
-        double[] wArray = this.array.clone();
-        double result = 1,divCoef = 0;
-        for(int step = 0; step < size-1; step++){
-            for(int row = step+1; row < size; row++){
-                divCoef = wArray[row*size+step]/wArray[step*size+step];
-                for(int col = 0; col < size; col++){
-                    wArray[row*size+col]-=divCoef*wArray[step*size+col];
-                }
-            }
-        }
-        for(int i = 0; i < size; i++){
-            result*=wArray[i*size + i];
-        }
-        return result;
-    }*/
 
-    public double getDeterminant(){
-        double[] wArray = this.array.clone();
-        double result = 1,divCoef = 0;
-        for(int step = 0; step < size-1; step++){
-            for(int row = step+1; row < size; row++){
-                if(wArray[step*size+step]!=0){
-                    divCoef = wArray[row*size+step]/wArray[step*size+step];
-                }else{
-                    for(int i = 0;i < size; i++){
-                        double buf = wArray[row*size+i];
-                        wArray[row*size+i] = - wArray[step*size+i];
-                        wArray[step*size+i] = buf;
+    public double getDeterminant() throws WrongCoordinatesException {
+        if (isCalculated) {
+            return this.determinant;
+        }
+
+        Matrix computing = new Matrix(this);
+        double temp = 0, determinant = 1.0, dtemp = 0;
+        int position = 0;
+        boolean notNullRow = false;
+
+        for (int k = 0; k < size; k++) {
+            position = k;
+            for (int i = 0; i < size; i++) {
+                if (computing.get(i, k) != 0) {
+                    position = i;
+                    notNullRow = true;
+                    if (position >= k) {
+                        break;
                     }
                 }
-                for(int col = 0; col < size; col++){
-                    wArray[row*size+col]-=divCoef*wArray[step*size+col];
+            }
+            if (position > k) {
+                for (int i = 0; i < size; i++) {
+                    dtemp = computing.get(k, i);
+                    computing.set(computing.get(position, i), k, i);
+                    computing.set(dtemp, position, i);
+                }
+                determinant *= -1;
+            }
+
+            if (!notNullRow) {
+                return 0;
+            }
+
+            temp = computing.get(k, k);
+            determinant *= temp;
+            for (int i = k + 1; i < size; i++) {
+                dtemp = computing.get(i, k) / temp;
+                for (int j = k + 1; j < size; j++) {
+                    computing.set(computing.get(i, j) - computing.get(k, j) * dtemp, i, j);
+                }
+            }
+            notNullRow = false;
+        }
+        this.determinant = determinant;
+        isCalculated = true;
+
+        return determinant;
+    }
+
+    public Matrix multiply(IMatrix orig) throws CanNotBeMultipliedxception {
+        if (orig.length() != size) throw new CanNotBeMultipliedxception();
+        Matrix res = new Matrix(size);
+        double temp = 0;
+
+        for (int i = 0; i < size; i++) {
+            for (int j = 0; j < size; j++) {
+                temp = 0;
+                for (int k = 0; k < size; k++) {
+                    temp += get(i, k) * orig.get(k, j);
+                }
+                res.set(temp, i, j);
+            }
+        }
+        return res;
+    }
+
+    public boolean isIdentity() {
+        for (int i = 0; i < size; i++) {
+            for (int j = 0; j < size; j++) {
+                if (i == j) {
+                    if (Math.abs(get(i, j) - 1.0) > 1e-9) {
+                        return false;
+                    }
+                } else {
+                    if (Math.abs(get(i, j)) > 1e-9) {
+                        return false;
+                    }
                 }
             }
         }
-        for(int i = 0; i < size; i++){
-            result*=wArray[i*size + i];
-        }
-        return result;
+        return true;
+    }
+
+    @Override
+    public String toString() {
+        return "Matrix{" +
+                "array=" + Arrays.toString(array) +
+                '}';
     }
 }

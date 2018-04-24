@@ -1,6 +1,6 @@
-package ru.omsu.imit;
+package ru.omsu.imit.matrices;
 
-public class WrongCoordinatesException extends RuntimeException {
+public class WrongCoordinatesException extends MatrixException {
     public WrongCoordinatesException() {
     }
 
@@ -10,9 +10,5 @@ public class WrongCoordinatesException extends RuntimeException {
 
     public WrongCoordinatesException(String message, Throwable cause) {
         super(message, cause);
-    }
-
-    public WrongCoordinatesException(Throwable cause) {
-        super(cause);
     }
 }

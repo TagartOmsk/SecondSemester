@@ -1,59 +1,91 @@
-package ru.omsu.imit;
+package ru.omsu.imit.matrices;
 
 public class InvertableMatrix extends Matrix implements IInvertableMatrix {
 
-    public InvertableMatrix(){
-        super();
+    public InvertableMatrix() {
+        this(1,1);
     }
 
-    public InvertableMatrix(int size, double...args){
-        super(size,args);
+    public InvertableMatrix(int size, double... args){
+        super(size, args);
+        if (Math.abs(this.getDeterminant()) < 1e-9) throw new MatrixIsntInvertableException();
     }
 
-    public InvertableMatrix(InvertableMatrix puper){
-        super(puper);
-    }
-    public InvertableMatrix invert(){
-        InvertableMatrix result;
-        double divCoef = 0;
-        double[] orig = this.array.clone(), res = new double[size*size];
-        for(int i = 0; i < size; i++){
-            array[i*size + i] = 1;
+    public InvertableMatrix(int size){
+        super(size);
+        for(int i = 0; i < this.size; i++){
+            this.set(1, i, i);
         }
+    }
+    public InvertableMatrix(Matrix puper){
+        this(puper.size, puper.array);
+    }
 
-        for(int step = 0; step < size-1; step++){
-            for(int row = step+1; row < size; row++){
-                if(orig[step*size+step]!=0){
-                    divCoef = orig[row*size+step]/orig[step*size+step];
-                }else{
-                    for(int i = 0;i < size; i++){
-                        double buf = orig[row*size+i], buf1 = res[row*size+i];
-                        orig[row*size+i] = - orig[step*size+i];
-                        orig[step*size+i] = buf;
-                        res[row*size+i] = - res[step*size+i];
-                        res[step*size+i] = buf1;
+    public Matrix invert() throws MatrixIsntInvertableException{
+        Matrix invert = new InvertableMatrix(this.size);
+        Matrix computing = new Matrix(this);
+        double temp = 0, dtemp = 0, det = 1;
+        int position = 0;
+
+        for (int k = 0; k < size; k++) {
+            position = k;
+            for (int i = 0; i < size; i++) {
+                if (computing.get(i, k) != 0) {
+                    position = i;
+                    if (position >= k) {
+                        break;
                     }
-                    divCoef = orig[row*size+step]/orig[step*size+step];
                 }
-                for(int col = 0; col < size; col++){
-                    orig[row*size+col]-=divCoef*orig[step*size+col];
-                    res[row*size+col]-=divCoef*res[step*size+col];
+            }
+            if (position > k) {
+                for (int i = 0; i < size; i++) {
+                    dtemp = computing.get(k, i);
+                    computing.set(computing.get(position, i), k, i);
+                    computing.set(dtemp, position, i);
+
+                    dtemp = invert.get(k, i);
+                    invert.set(invert.get(position, i), k, i);
+                    invert.set(dtemp, position, i);
+                }
+                det *= -1;
+            }
+
+            temp = computing.get(k, k);
+            det *= temp;
+            for (int i = k + 1; i < size; i++) {
+                dtemp = computing.get(i, k) / temp;
+                for (int j = k; j < size; j++) {
+                    computing.set(computing.get(i, j) - computing.get(k, j) * dtemp, i, j);
+                    invert.set(invert.get(i, j) - invert.get(k, j) * dtemp, i, j);
+                }
+                if (k > 0) {
+                    for (int j = 0; j < k; j++) {
+                        invert.set(invert.get(i, j) - invert.get(k, j) * dtemp, i, j);
+                    }
                 }
             }
         }
-        for(int step = size-1; step > 0; step--){
-            for(int row = size-1; row>0;row--){
-                divCoef = orig[row*size+step]/orig[step*size+step];
-                for(int col = step; col > 0; col--){
-                    orig[row*size+col]-=divCoef*orig[step*size+col];
-                    res[row*size+col]-=divCoef*res[step*size+col];
+        if (!this.isCalculated) {
+            this.determinant = det;
+        }
+        dtemp = 0;
+        temp = 0;
+
+        for (int k = size - 1; k >= 0; k--) {
+            temp = computing.get(k, k);
+            for (int i = k - 1; i >= 0; i--) {
+                dtemp = computing.get(i, k) / temp;
+                for (int j = 0; j < size; j++) {
+                    invert.set(invert.get(i, j) - invert.get(k, j) * dtemp, i, j);
                 }
             }
         }
-        result = new InvertableMatrix(res.length,res);
-        return result;
+        for (int i = 0; i < size; i++) {
+            for (int j = 0; j < size; j++) {
+                invert.set(invert.get(i, j) / computing.get(i, i), i, j);
+            }
+            computing.set(1, i, i);
+        }
+        return invert;
     }
 }
-// a a1 a2
-// 0 b  b1
-// 0 0  c

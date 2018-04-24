@@ -1,14 +1,14 @@
 package ru.omsu.imit.matrices;
 
-public class MatrixIsntInvertable extends MatrixException{
-    public MatrixIsntInvertable() {
+public class MatrixIsntInvertableException extends MatrixException{
+    public MatrixIsntInvertableException() {
     }
 
-    public MatrixIsntInvertable(String message) {
+    public MatrixIsntInvertableException(String message) {
         super(message);
     }
 
-    public MatrixIsntInvertable(String message, Throwable cause) {
+    public MatrixIsntInvertableException(String message, Throwable cause) {
         super(message, cause);
     }
 }
