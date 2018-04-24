@@ -25,7 +25,7 @@ public class MatrixTest {
     }
     @Test(dataProvider = "goodRes")
     public void testGetDeterminant(int size, double wanted, double...arr) throws Exception {
-        assertTrue(Math.abs(new Matrix(size, arr).getDeterminant()-wanted) <= 1e-9);
+        assertTrue(Math.abs(new Matrix(size, arr).getDeterminant() - wanted) <= 1e-9);
     }
 
 }

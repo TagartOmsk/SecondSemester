@@ -34,7 +34,7 @@ public class Matrix implements IMatrix{
         return size;
     }
 
-    public double get(int x, int y){
+    public double get(int x, int y) throws WrongCoordinatesException{
         if(x * size + y >= size * size) throw new WrongCoordinatesException();
         return array[x*size + y];
     }
@@ -43,7 +43,7 @@ public class Matrix implements IMatrix{
         return array[x];
     }
 
-    public void set(double value, int x, int y){
+    public void set(double value, int x, int y) throws WrongCoordinatesException{
         try {
             array[x * size + y] = value;
         }catch(ArrayIndexOutOfBoundsException e){
